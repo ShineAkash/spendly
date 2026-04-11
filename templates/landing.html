@@ -6,55 +6,57 @@
 
 <section class="hero">
     <div class="hero-inner">
-        <div class="hero-badge">Personal Finance Tracker</div>
+        <div class="hero-badge">
+            <span class="badge-dot"></span>Free to use · No credit card needed
+        </div>
         <h1 class="hero-title">
-            Know where your<br>
-            <em>money goes</em>
+            Track every rupee.<br>
+            <span class="highlight">Know where it goes.</span>
         </h1>
         <p class="hero-subtitle">
-            Log expenses, understand your spending patterns,
-            and take control of your financial life —
-            one transaction at a time.
+            Spendly helps you log expenses, spot patterns, and stay on budget — without the spreadsheet headache.
         </p>
         <div class="hero-actions">
-            <a href="{{ url_for('register') }}" class="btn-primary">Start tracking free</a>
-            <a href="{{ url_for('login') }}" class="btn-ghost">Sign in</a>
+            <a href="{{ url_for('register') }}" class="btn-hero">Create free account</a>
+            <button id="open-modal" class="btn-hero">See how it works</button>
         </div>
-    </div>
-    <div class="hero-visual">
-        <div class="mock-card">
-            <div class="mock-card-header">
-                <span class="mock-label">March 2026</span>
-                <span class="mock-total">₹12,450</span>
+
+        <div class="dashboard-card">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-label">This month</span>
+                    <span class="stat-value">₹18,240</span>
+                    <span class="stat-trend down">+12% vs last</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Budget left</span>
+                    <span class="stat-value">₹6,760</span>
+                    <span class="stat-trend up">43% remaining</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Transactions</span>
+                    <span class="stat-value">34</span>
+                    <span class="stat-trend">this month</span>
+                </div>
             </div>
-            <div class="mock-bars">
-                <div class="mock-bar-row">
-                    <span class="mock-cat">Bills</span>
-                    <div class="mock-bar-track">
-                        <div class="mock-bar" style="width: 72%"></div>
+            <div class="progress-section">
+                <div class="progress-row">
+                    <span class="progress-label">Food</span>
+                    <div class="progress-track">
+                        <div class="progress-bar food"></div>
                     </div>
-                    <span class="mock-amt">₹4,500</span>
                 </div>
-                <div class="mock-bar-row">
-                    <span class="mock-cat">Food</span>
-                    <div class="mock-bar-track">
-                        <div class="mock-bar mock-bar-2" style="width: 52%"></div>
+                <div class="progress-row">
+                    <span class="progress-label">Travel</span>
+                    <div class="progress-track">
+                        <div class="progress-bar travel"></div>
                     </div>
-                    <span class="mock-amt">₹3,200</span>
                 </div>
-                <div class="mock-bar-row">
-                    <span class="mock-cat">Health</span>
-                    <div class="mock-bar-track">
-                        <div class="mock-bar mock-bar-3" style="width: 33%"></div>
+                <div class="progress-row">
+                    <span class="progress-label">Bills</span>
+                    <div class="progress-track">
+                        <div class="progress-bar bills"></div>
                     </div>
-                    <span class="mock-amt">₹2,050</span>
-                </div>
-                <div class="mock-bar-row">
-                    <span class="mock-cat">Transport</span>
-                    <div class="mock-bar-track">
-                        <div class="mock-bar mock-bar-4" style="width: 28%"></div>
-                    </div>
-                    <span class="mock-amt">₹1,800</span>
                 </div>
             </div>
         </div>
@@ -88,5 +90,41 @@
         <a href="{{ url_for('register') }}" class="btn-primary">Create free account</a>
     </div>
 </section>
+
+<div id="how-it-works-modal" class="modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-container">
+        <button class="modal-close">&times;</button>
+        <div class="modal-content">
+            <h2 class="modal-title">Simple, Smart Tracking</h2>
+            <p class="modal-body">
+                Spendly helps you manage your money by removing the friction of logging.
+                Just enter the amount, pick a category, and you're done.
+                Our automatic summaries then show you exactly where your money goes.
+            </p>
+            <div class="modal-footer">
+                <a href="{{ url_for('register') }}" class="btn-primary">Get Started Now</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('how-it-works-modal');
+    const openBtn = document.getElementById('open-modal');
+    const closeBtn = document.querySelector('.modal-close');
+    const overlay = document.querySelector('.modal-overlay');
+
+    const toggleModal = (isOpen) => {
+        modal.classList.toggle('active', isOpen);
+        document.body.style.overflow = isOpen ? 'hidden' : '';
+    };
+
+    openBtn.onclick = () => toggleModal(true);
+    closeBtn.onclick = () => toggleModal(false);
+    overlay.onclick = () => toggleModal(false);
+});
+</script>
 
 {% endblock %}
