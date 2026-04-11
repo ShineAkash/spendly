@@ -96,14 +96,17 @@
     <div class="modal-container">
         <button class="modal-close">&times;</button>
         <div class="modal-content">
-            <h2 class="modal-title">Simple, Smart Tracking</h2>
-            <p class="modal-body">
-                Spendly helps you manage your money by removing the friction of logging.
-                Just enter the amount, pick a category, and you're done.
-                Our automatic summaries then show you exactly where your money goes.
-            </p>
-            <div class="modal-footer">
-                <a href="{{ url_for('register') }}" class="btn-primary">Get Started Now</a>
+            <div class="video-container">
+                <iframe
+                    id="modal-video"
+                    width="560"
+                    height="315"
+                    src="https://www.youtube.com/embed/dQw4w9WgXcQ"
+                    title="YouTube video player"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen>
+                </iframe>
             </div>
         </div>
     </div>
@@ -115,10 +118,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const openBtn = document.getElementById('open-modal');
     const closeBtn = document.querySelector('.modal-close');
     const overlay = document.querySelector('.modal-overlay');
+    const videoIframe = document.getElementById('modal-video');
 
     const toggleModal = (isOpen) => {
         modal.classList.toggle('active', isOpen);
         document.body.style.overflow = isOpen ? 'hidden' : '';
+
+        if (!isOpen) {
+            // Stop video by resetting src
+            const src = videoIframe.src;
+            videoIframe.src = '';
+            videoIframe.src = src;
+        }
     };
 
     openBtn.onclick = () => toggleModal(true);
