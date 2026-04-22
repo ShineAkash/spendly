@@ -13,22 +13,33 @@
         </div>
 
         <div class="auth-card">
-            {% if error %}
-            <div class="auth-error">{{ error }}</div>
-            {% endif %}
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  {% if category == 'error' %}
+                  <div class="auth-error">{{ message }}</div>
+                  {% elif category == 'success' %}
+                  <div class="auth-success">{{ message }}</div>
+                  {% endif %}
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
 
-            <form method="POST" action="/login">
+            <form method="POST" action="{{ url_for('login') }}">
+                {{ form.hidden_tag() }}
                 <div class="form-group">
                     <label for="email">Email address</label>
-                    <input type="email" id="email" name="email"
-                           class="form-input" placeholder="nitish@example.com"
-                           required autofocus>
+                    {{ form.email(class="form-input", placeholder="nitish@example.com", autofocus=true) }}
+                    {% for error in form.email.errors %}
+                    <div class="field-error">{{ error }}</div>
+                    {% endfor %}
                 </div>
                 <div class="form-group">
                     <label for="password">Password</label>
-                    <input type="password" id="password" name="password"
-                           class="form-input" placeholder="Your password"
-                           required>
+                    {{ form.password(class="form-input", placeholder="Your password") }}
+                    {% for error in form.password.errors %}
+                    <div class="field-error">{{ error }}</div>
+                    {% endfor %}
                 </div>
                 <button type="submit" class="btn-submit">Sign in</button>
             </form>

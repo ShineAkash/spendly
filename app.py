@@ -2,11 +2,50 @@ from flask import Flask, render_template, flash, redirect, url_for, request
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from database.db import get_db, init_db, seed_db
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "dev-secret-key-change-in-production"
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "login"
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    db = get_db()
+    cur = db.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+    row = cur.fetchone()
+    if row:
+        return User(row)
+    return None
+
+
+class User:
+    def __init__(self, row):
+        self.row = row
+        self.id = row["id"]
+        self.name = row["name"]
+        self.email = row["email"]
+        self.password_hash = row["password_hash"]
+
+    @property
+    def is_active(self):
+        return True
+
+    @property
+    def is_authenticated(self):
+        return True
+
+    @property
+    def is_anonymous(self):
+        return False
+
+    def get_id(self):
+        return str(self.row["id"])
 
 
 # ------------------------------------------------------------------ #
@@ -20,6 +59,9 @@ def landing():
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
+    if current_user.is_authenticated:
+        return redirect(url_for("profile"))
+
     form = RegistrationForm()
     if form.validate_on_submit():
         name = form.name.data
@@ -59,9 +101,34 @@ class RegistrationForm(FlaskForm):
             raise ValidationError("An account with that email already exists.")
 
 
-@app.route("/login")
+@app.route("/login", methods=["GET", "POST"])
 def login():
-    return render_template("login.html")
+    if current_user.is_authenticated:
+        return redirect(url_for("profile"))
+
+    form = LoginForm()
+    if form.validate_on_submit():
+        email = form.email.data
+        password = form.password.data
+
+        db = get_db()
+        cur = db.execute("SELECT * FROM users WHERE email = ?", (email,))
+        user = cur.fetchone()
+
+        if user and check_password_hash(user["password_hash"], password):
+            login_user(User(user))
+            flash("Welcome back!", "success")
+            return redirect(url_for("profile"))
+
+        flash("Invalid email or password.", "error")
+
+    return render_template("login.html", form=form)
+
+
+class LoginForm(FlaskForm):
+    email = StringField("Email address", validators=[DataRequired(), Email()])
+    password = PasswordField("Password", validators=[DataRequired()])
+    submit = SubmitField("Sign in")
 
 
 @app.route("/terms")
@@ -79,13 +146,17 @@ def privacy():
 # ------------------------------------------------------------------ #
 
 @app.route("/logout")
+@login_required
 def logout():
-    return "Logout — coming in Step 3"
+    logout_user()
+    flash("You've been signed out.", "success")
+    return redirect(url_for("login"))
 
 
 @app.route("/profile")
+@login_required
 def profile():
-    return "Profile page — coming in Step 4"
+    return render_template("profile.html")
 
 
 @app.route("/expenses/add")
