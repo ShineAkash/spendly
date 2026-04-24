@@ -720,6 +720,184 @@ a { color: inherit; text-decoration: none; }
 .auth-switch a:hover { text-decoration: underline; }
 
 /* ------------------------------------------------------------------ */
+/* Profile page                                                        */
+/* ------------------------------------------------------------------ */
+
+.profile-page {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 3rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.profile-card {
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--paper-card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.profile-name {
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    color: var(--ink);
+    margin: 0 0 0.25rem;
+}
+
+.profile-email {
+    color: var(--ink-soft);
+    margin: 0 0 0.25rem;
+}
+
+.profile-since {
+    color: var(--ink-muted);
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.stat-card {
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.section {
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+}
+
+.section-title {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    color: var(--ink);
+    margin: 0 0 1.5rem;
+}
+
+/* Transaction Table */
+.trans-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.trans-table th,
+.trans-table td {
+    text-align: left;
+    padding: 0.875rem 0.5rem;
+    border-bottom: 1px solid var(--border-soft);
+}
+
+.trans-table th {
+    color: var(--ink-muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 500;
+}
+
+.trans-table td {
+    color: var(--ink-soft);
+    font-size: 0.9375rem;
+}
+
+.trans-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Category Badges */
+.badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 0.8125rem;
+    font-weight: 500;
+}
+
+.badge-category {
+    background: var(--accent-light);
+    color: var(--accent);
+}
+
+/* Category Breakdown */
+.category-row {
+    margin-bottom: 1.25rem;
+}
+
+.category-row:last-child {
+    margin-bottom: 0;
+}
+
+.category-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.375rem;
+}
+
+.category-name {
+    color: var(--ink-soft);
+    font-size: 0.9375rem;
+}
+
+.category-amount {
+    color: var(--ink);
+    font-weight: 600;
+}
+
+.category-bar-bg {
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.category-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+    .stats-row {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-card {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
+/* ------------------------------------------------------------------ */
 /* Legal pages                                                         */
 /* ------------------------------------------------------------------ */
 

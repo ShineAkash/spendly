@@ -156,7 +156,32 @@ def logout():
 @app.route("/profile")
 @login_required
 def profile():
-    return render_template("profile.html")
+    context = {
+        "user": {
+            "name": current_user.name,
+            "email": current_user.email,
+            "member_since": "January 2025"
+        },
+        "stats": {
+            "total_spent": 2847.50,
+            "transaction_count": 24,
+            "top_category": "Food & Drink"
+        },
+        "transactions": [
+            {"date": "Apr 22, 2026", "description": "Grocery run at Whole Foods", "category": "Food & Drink", "amount": 87.40},
+            {"date": "Apr 20, 2026", "description": "Monthly Spotify subscription", "category": "Entertainment", "amount": 9.99},
+            {"date": "Apr 18, 2026", "description": "Uber commute", "category": "Transport", "amount": 24.50},
+            {"date": "Apr 15, 2026", "description": "Dinner at Olive Garden", "category": "Food & Drink", "amount": 65.00},
+            {"date": "Apr 12, 2026", "description": "Amazon purchase — headphones", "category": "Shopping", "amount": 149.99},
+        ],
+        "categories": [
+            {"name": "Food & Drink", "total": 512.40, "percentage": 40},
+            {"name": "Transport", "total": 245.00, "percentage": 20},
+            {"name": "Shopping", "total": 380.50, "percentage": 30},
+            {"name": "Entertainment", "total": 89.90, "percentage": 10},
+        ]
+    }
+    return render_template("profile.html", **context)
 
 
 @app.route("/expenses/add")
