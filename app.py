@@ -1,4 +1,5 @@
 from flask import Flask, render_template, flash, redirect, url_for, request
+from datetime import datetime
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError
@@ -156,30 +157,62 @@ def logout():
 @app.route("/profile")
 @login_required
 def profile():
+    db = get_db()
+
+    # User info
+    cur = db.execute("SELECT created_at FROM users WHERE id = ?", (current_user.id,))
+    row = cur.fetchone()
+    member_since = datetime.strptime(row["created_at"], "%Y-%m-%d %H:%M:%S").strftime("%B %Y")
+
+    # Transactions (ordered by date desc, limit 10)
+    cur = db.execute(
+        "SELECT date, description, category, amount FROM expenses WHERE user_id = ? ORDER BY date DESC LIMIT 10",
+        (current_user.id,)
+    )
+    transactions = [dict(row) for row in cur.fetchall()]
+
+    # Stats — total_spent and transaction_count
+    cur = db.execute(
+        "SELECT SUM(amount) as total, COUNT(*) as count FROM expenses WHERE user_id = ?",
+        (current_user.id,)
+    )
+    stats_row = cur.fetchone()
+    total_spent = stats_row["total"] or 0
+    transaction_count = stats_row["count"] or 0
+
+    # Top category
+    cur = db.execute(
+        "SELECT category, SUM(amount) as total FROM expenses WHERE user_id = ? GROUP BY category ORDER BY total DESC LIMIT 1",
+        (current_user.id,)
+    )
+    top_row = cur.fetchone()
+    top_category = top_row["category"] if top_row else "None"
+
+    # Category breakdown with percentages
+    cur = db.execute(
+        "SELECT category, SUM(amount) as total FROM expenses WHERE user_id = ? GROUP BY category ORDER BY total DESC",
+        (current_user.id,)
+    )
+    category_rows = cur.fetchall()
+    grand_total = sum(r["total"] for r in category_rows) or 1
+    categories = [
+        {"name": r["category"], "total": r["total"], "percentage": round(r["total"] / grand_total * 100)}
+        for r in category_rows
+    ]
+
     context = {
         "user": {
             "name": current_user.name,
             "email": current_user.email,
-            "member_since": "January 2025"
+            "member_since": member_since
         },
         "stats": {
-            "total_spent": 2847.50,
-            "transaction_count": 24,
-            "top_category": "Food & Drink"
+            "total_spent": total_spent,
+            "transaction_count": transaction_count,
+            "top_category": top_category
         },
-        "transactions": [
-            {"date": "Apr 22, 2026", "description": "Grocery run at Whole Foods", "category": "Food & Drink", "amount": 87.40},
-            {"date": "Apr 20, 2026", "description": "Monthly Spotify subscription", "category": "Entertainment", "amount": 9.99},
-            {"date": "Apr 18, 2026", "description": "Uber commute", "category": "Transport", "amount": 24.50},
-            {"date": "Apr 15, 2026", "description": "Dinner at Olive Garden", "category": "Food & Drink", "amount": 65.00},
-            {"date": "Apr 12, 2026", "description": "Amazon purchase — headphones", "category": "Shopping", "amount": 149.99},
-        ],
-        "categories": [
-            {"name": "Food & Drink", "total": 512.40, "percentage": 40},
-            {"name": "Transport", "total": 245.00, "percentage": 20},
-            {"name": "Shopping", "total": 380.50, "percentage": 30},
-            {"name": "Entertainment", "total": 89.90, "percentage": 10},
-        ]
+        "transactions": transactions,
+        "categories": categories
     }
     return render_template("profile.html", **context)
 
