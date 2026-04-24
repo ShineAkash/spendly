@@ -17,7 +17,7 @@
     <div class="stats-row">
         <div class="stat-card">
             <span class="stat-label">Total Spent</span>
-            <span class="stat-value">${{ "%.2f"|format(stats.total_spent) }}</span>
+            <span class="stat-value">₹{{ "%.2f"|format(stats.total_spent) }}</span>
         </div>
         <div class="stat-card">
             <span class="stat-label">Transactions</span>
@@ -46,7 +46,7 @@
                     <td>{{ t.date }}</td>
                     <td>{{ t.description }}</td>
                     <td><span class="badge badge-category">{{ t.category }}</span></td>
-                    <td>${{ "%.2f"|format(t.amount) }}</td>
+                    <td>₹{{ "%.2f"|format(t.amount) }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -59,7 +59,7 @@
         <div class="category-row">
             <div class="category-header">
                 <span class="category-name">{{ cat.name }}</span>
-                <span class="category-amount">${{ "%.2f"|format(cat.total) }}</span>
+                <span class="category-amount">₹{{ "%.2f"|format(cat.total) }}</span>
             </div>
             <div class="category-bar-bg">
                 <div class="category-bar-fill" style="width: {{ cat.percentage }}%"></div>
