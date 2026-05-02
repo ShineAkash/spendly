@@ -30,6 +30,22 @@
     </div>
 
     <div class="section">
+        <div class="filter-section" style="margin-bottom: 20px; padding: 15px; background: var(--bg-secondary, #f9f9f9); border-radius: 8px; border: 1px solid var(--border-color, #ddd);">
+            <form method="GET" action="{{ url_for('profile') }}" class="filter-form" style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
+                <div class="filter-group" style="display: flex; flex-direction: column; gap: 5px;">
+                    <label for="start_date" style="font-size: 0.9rem; font-weight: bold;">From:</label>
+                    <input type="date" id="start_date" name="start_date" value="{{ request.args.get('start_date', '') }}" style="padding: 8px; border-radius: 4px; border: 1px solid var(--border-color, #ddd);">
+                </div>
+                <div class="filter-group" style="display: flex; flex-direction: column; gap: 5px;">
+                    <label for="end_date" style="font-size: 0.9rem; font-weight: bold;">To:</label>
+                    <input type="date" id="end_date" name="end_date" value="{{ request.args.get('end_date', '') }}" style="padding: 8px; border-radius: 4px; border: 1px solid var(--border-color, #ddd);">
+                </div>
+                <div class="filter-actions" style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn-filter" style="padding: 8px 16px; background: var(--primary-color, #007bff); color: white; border: none; border-radius: 4px; cursor: pointer;">Apply Filter</button>
+                    <a href="{{ url_for('profile') }}" class="btn-clear" style="padding: 8px 16px; color: var(--text-muted, #666); text-decoration: none; font-size: 0.9rem; align-self: center;">Clear</a>
+                </div>
+            </form>
+        </div>
         <h2 class="section-title">Recent Transactions</h2>
         <table class="trans-table">
             <thead>

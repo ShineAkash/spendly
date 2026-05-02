@@ -159,40 +159,71 @@ def logout():
 def profile():
     db = get_db()
 
+    # Date filtering logic
+    start_date = request.args.get("start_date")
+    end_date = request.args.get("end_date")
+
+    valid_start = None
+    valid_end = None
+
+    if start_date:
+        try:
+            datetime.strptime(start_date, "%Y-%m-%d")
+            valid_start = start_date
+        except ValueError:
+            pass
+
+    if end_date:
+        try:
+            datetime.strptime(end_date, "%Y-%m-%d")
+            valid_end = end_date
+        except ValueError:
+            pass
+
+    def get_filter_clause(base_query):
+        params = [current_user.id]
+        query = f"{base_query} WHERE user_id = ?"
+        if valid_start:
+            query += " AND date >= ?"
+            params.append(valid_start)
+        if valid_end:
+            query += " AND date <= ?"
+            params.append(valid_end)
+        return query, params
+
     # User info
     cur = db.execute("SELECT created_at FROM users WHERE id = ?", (current_user.id,))
     row = cur.fetchone()
     member_since = datetime.strptime(row["created_at"], "%Y-%m-%d %H:%M:%S").strftime("%B %Y")
 
     # Transactions (ordered by date desc, limit 10)
-    cur = db.execute(
-        "SELECT date, description, category, amount FROM expenses WHERE user_id = ? ORDER BY date DESC LIMIT 10",
-        (current_user.id,)
-    )
+    base_tx_query = "SELECT date, description, category, amount FROM expenses"
+    tx_query, tx_params = get_filter_clause(base_tx_query)
+    tx_query += " ORDER BY date DESC LIMIT 10"
+    cur = db.execute(tx_query, tx_params)
     transactions = [dict(row) for row in cur.fetchall()]
 
     # Stats — total_spent and transaction_count
-    cur = db.execute(
-        "SELECT SUM(amount) as total, COUNT(*) as count FROM expenses WHERE user_id = ?",
-        (current_user.id,)
-    )
+    base_stats_query = "SELECT SUM(amount) as total, COUNT(*) as count FROM expenses"
+    stats_query, stats_params = get_filter_clause(base_stats_query)
+    cur = db.execute(stats_query, stats_params)
     stats_row = cur.fetchone()
     total_spent = stats_row["total"] or 0
     transaction_count = stats_row["count"] or 0
 
     # Top category
-    cur = db.execute(
-        "SELECT category, SUM(amount) as total FROM expenses WHERE user_id = ? GROUP BY category ORDER BY total DESC LIMIT 1",
-        (current_user.id,)
-    )
+    base_top_query = "SELECT category, SUM(amount) as total FROM expenses"
+    top_query, top_params = get_filter_clause(base_top_query)
+    top_query += " GROUP BY category ORDER BY total DESC LIMIT 1"
+    cur = db.execute(top_query, top_params)
     top_row = cur.fetchone()
     top_category = top_row["category"] if top_row else "None"
 
     # Category breakdown with percentages
-    cur = db.execute(
-        "SELECT category, SUM(amount) as total FROM expenses WHERE user_id = ? GROUP BY category ORDER BY total DESC",
-        (current_user.id,)
-    )
+    base_breakdown_query = "SELECT category, SUM(amount) as total FROM expenses"
+    breakdown_query, breakdown_params = get_filter_clause(base_breakdown_query)
+    breakdown_query += " GROUP BY category ORDER BY total DESC"
+    cur = db.execute(breakdown_query, breakdown_params)
     category_rows = cur.fetchall()
     grand_total = sum(r["total"] for r in category_rows) or 1
     categories = [
