@@ -1,11 +1,12 @@
 from flask import Flask, render_template, flash, redirect, url_for, request
-from datetime import datetime
+from datetime import datetime, date as date_cls
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField
-from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError
+from wtforms import StringField, PasswordField, SubmitField, DecimalField, SelectField, DateField
+from wtforms.validators import DataRequired, Email, EqualTo, Length, NumberRange, ValidationError
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from database.db import get_db, init_db, seed_db
+from database.db import get_db, init_db, seed_db, add_expense as db_add_expense
+import sqlite3
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "dev-secret-key-change-in-production"
@@ -254,10 +255,54 @@ def analytics():
     return render_template("analytics.html")
 
 
-@app.route("/expenses/add")
+class ExpenseForm(FlaskForm):
+    amount = DecimalField(
+        "Amount",
+        places=2,
+        validators=[DataRequired(), NumberRange(min=0.01, max=1_000_000)]
+    )
+    category = SelectField("Category", choices=[
+        ("Food", "Food"),
+        ("Transport", "Transport"),
+        ("Bills", "Bills"),
+        ("Health", "Health"),
+        ("Entertainment", "Entertainment"),
+        ("Shopping", "Shopping"),
+        ("Other", "Other")
+    ], validators=[DataRequired()])
+    date = DateField("Date", format="%Y-%m-%d", validators=[DataRequired()],
+                     default=date_cls.today)
+    description = StringField("Description", validators=[Length(max=200)])
+    submit = SubmitField("Add Expense")
 
+    def validate_date(self, field):
+        if field.data and field.data > date_cls.today():
+            raise ValidationError("Date cannot be in the future.")
+
+
+@app.route("/expenses/add", methods=["GET", "POST"])
+@login_required
 def add_expense():
-    return "Add expense — coming in Step 7"
+    form = ExpenseForm()
+
+    if form.validate_on_submit():
+        try:
+            db_add_expense(
+                current_user.id,
+                float(form.amount.data),
+                form.category.data,
+                form.date.data.isoformat(),
+                form.description.data
+            )
+        except sqlite3.Error:
+            app.logger.exception("add_expense: database insert failed")
+            flash("Could not save the expense. Please try again.", "error")
+            return render_template("add_expense.html", form=form)
+
+        flash("Expense added successfully!", "success")
+        return redirect(url_for("profile"))
+
+    return render_template("add_expense.html", form=form)
 
 
 @app.route("/expenses/<int:id>/edit")

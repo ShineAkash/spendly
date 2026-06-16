@@ -1,16 +1,20 @@
 import sqlite3
 from datetime import date
 from werkzeug.security import generate_password_hash
-
-DATABASE = "spendly.db"
-
+from flask import current_app
 
 def get_db():
-    conn = sqlite3.connect(DATABASE)
+    # Fall back to the default DB path if called outside an app context
+    # (e.g. from the `if __name__ == "__main__"` block in app.py).
+    try:
+        database = current_app.config.get("DATABASE", "spendly.db")
+    except RuntimeError:
+        database = "spendly.db"
+
+    conn = sqlite3.connect(database)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     return conn
-
 
 def init_db():
     conn = get_db()
@@ -39,7 +43,6 @@ def init_db():
         conn.commit()
     finally:
         conn.close()
-
 
 def seed_db():
     conn = get_db()
@@ -72,6 +75,17 @@ def seed_db():
         conn.executemany(
             "INSERT INTO expenses (user_id, amount, category, date, description) VALUES (?, ?, ?, ?, ?)",
             expenses
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+def add_expense(user_id, amount, category, date, description):
+    conn = get_db()
+    try:
+        conn.execute(
+            "INSERT INTO expenses (user_id, amount, category, date, description) VALUES (?, ?, ?, ?, ?)",
+            (user_id, amount, category, date, description)
         )
         conn.commit()
     finally:
