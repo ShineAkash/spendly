@@ -1,0 +1,15 @@
+// {
+//   "hooks": {
+//     "PostToolUse": [
+//       {
+//         "matcher": "Write|Edit",
+//         "hooks": [
+//           {
+//             "type": "command",
+//             "command": "py -3 -c \"import sys,json,subprocess; data=json.load(sys.stdin); file=data.get('tool_input',{}).get('file_path',''); subprocess.run([sys.executable,'-m','black','--quiet',file],check=False) if file.endswith('.py') else None\""
+//           }
+//         ]
+//       }
+//     ]
+//   }
+// }

@@ -1,11 +1,11 @@
-from flask import Flask, render_template, flash, redirect, url_for, request
+from flask import Flask, render_template, flash, redirect, url_for, request, abort
 from datetime import datetime, date as date_cls
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, DecimalField, SelectField, DateField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, NumberRange, ValidationError
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from database.db import get_db, init_db, seed_db, add_expense as db_add_expense
+from database.db import get_db, init_db, seed_db, add_expense as db_add_expense, update_expense as db_update_expense
 import sqlite3
 
 app = Flask(__name__)
@@ -198,7 +198,7 @@ def profile():
     member_since = datetime.strptime(row["created_at"], "%Y-%m-%d %H:%M:%S").strftime("%B %Y")
 
     # Transactions (ordered by date desc, limit 10)
-    base_tx_query = "SELECT date, description, category, amount FROM expenses"
+    base_tx_query = "SELECT id, date, description, category, amount FROM expenses"
     tx_query, tx_params = get_filter_clause(base_tx_query)
     tx_query += " ORDER BY date DESC LIMIT 10"
     cur = db.execute(tx_query, tx_params)
@@ -212,19 +212,21 @@ def profile():
     total_spent = stats_row["total"] or 0
     transaction_count = stats_row["count"] or 0
 
-    # Top category
-    base_top_query = "SELECT category, SUM(amount) as total FROM expenses"
-    top_query, top_params = get_filter_clause(base_top_query)
-    top_query += " GROUP BY category ORDER BY total DESC LIMIT 1"
-    cur = db.execute(top_query, top_params)
+    # Top category (lifetime, ignores date filter)
+    cur = db.execute(
+        "SELECT category, SUM(amount) as total FROM expenses "
+        "WHERE user_id = ? GROUP BY category ORDER BY total DESC LIMIT 1",
+        (current_user.id,)
+    )
     top_row = cur.fetchone()
     top_category = top_row["category"] if top_row else "None"
 
-    # Category breakdown with percentages
-    base_breakdown_query = "SELECT category, SUM(amount) as total FROM expenses"
-    breakdown_query, breakdown_params = get_filter_clause(base_breakdown_query)
-    breakdown_query += " GROUP BY category ORDER BY total DESC"
-    cur = db.execute(breakdown_query, breakdown_params)
+    # Category breakdown (lifetime, ignores date filter)
+    cur = db.execute(
+        "SELECT category, SUM(amount) as total FROM expenses "
+        "WHERE user_id = ? GROUP BY category ORDER BY total DESC",
+        (current_user.id,)
+    )
     category_rows = cur.fetchall()
     grand_total = sum(r["total"] for r in category_rows) or 1
     categories = [
@@ -305,9 +307,41 @@ def add_expense():
     return render_template("add_expense.html", form=form)
 
 
-@app.route("/expenses/<int:id>/edit")
+@app.route("/expenses/<int:id>/edit", methods=["GET", "POST"])
+@login_required
 def edit_expense(id):
-    return "Edit expense — coming in Step 8"
+    db = get_db()
+    cur = db.execute(
+        "SELECT * FROM expenses WHERE id = ? AND user_id = ?",
+        (id, current_user.id)
+    )
+    expense = cur.fetchone()
+    if expense is None:
+        abort(404)
+
+    row = dict(expense)
+    row["date"] = datetime.strptime(row["date"], "%Y-%m-%d").date()
+    form = ExpenseForm(data=row)
+
+    if form.validate_on_submit():
+        try:
+            db_update_expense(
+                expense["id"],
+                current_user.id,
+                float(form.amount.data),
+                form.category.data,
+                form.date.data.isoformat(),
+                form.description.data
+            )
+        except sqlite3.Error:
+            app.logger.exception("edit_expense: database update failed")
+            flash("Could not save the changes. Please try again.", "error")
+            return render_template("edit_expense.html", form=form)
+
+        flash("Expense updated successfully!", "success")
+        return redirect(url_for("profile"))
+
+    return render_template("edit_expense.html", form=form)
 
 
 @app.route("/expenses/<int:id>/delete")

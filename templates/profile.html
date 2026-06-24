@@ -2,8 +2,56 @@
 
 {% block title %}Profile — Spendly{% endblock %}
 
+{% block head %}
+<style>
+    .flashes {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 1.25rem 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .flash {
+        padding: 0.75rem 1rem;
+        border-radius: var(--radius-sm, 6px);
+        border: 1px solid var(--border, #ddd);
+        font-size: 0.95rem;
+        background: var(--bg-secondary, var(--surface, #f9f9f9));
+        color: var(--ink, #111);
+    }
+    .flash-success {
+        border-color: var(--accent, #16a34a);
+        color: var(--accent, #16a34a);
+    }
+    .flash-error {
+        border-color: var(--danger, #dc2626);
+        color: var(--danger, #dc2626);
+    }
+    .trans-edit-link {
+        color: var(--accent, var(--primary-color, #007bff));
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    .trans-edit-link:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <section class="profile-page">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul class="flashes">
+                {% for category, message in messages %}
+                    <li class="flash {{ 'flash-' ~ category }}">{{ message }}</li>
+                {% endfor %}
+           </ul>
+        {% endif %}
+    {% endwith %}
 
     <div class="profile-card">
         <div class="avatar">{{ current_user.name[0] }}</div>
@@ -11,41 +59,41 @@
             <h1 class="profile-name">{{ user.name }}</h1>
             <p class="profile-email">{{ user.email }}</p>
             <p class="profile-since">Member since {{ user.member_since }}</p>
-        </div>
-    </div>
+       </div>
+   </div>
 
     <div class="stats-row">
         <div class="stat-card">
             <span class="stat-label">Total Spent</span>
             <span class="stat-value">₹{{ "%.2f"|format(stats.total_spent) }}</span>
-        </div>
+       </div>
         <div class="stat-card">
             <span class="stat-label">Transactions</span>
             <span class="stat-value">{{ stats.transaction_count }}</span>
-        </div>
+       </div>
         <div class="stat-card">
             <span class="stat-label">Top Category</span>
             <span class="stat-value">{{ stats.top_category }}</span>
-        </div>
-    </div>
+       </div>
+   </div>
 
     <div class="section">
         <div class="filter-section" style="margin-bottom: 20px; padding: 15px; background: var(--bg-secondary, #f9f9f9); border-radius: 8px; border: 1px solid var(--border-color, #ddd);">
             <form method="GET" action="{{ url_for('profile') }}" class="filter-form" style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
                 <div class="filter-group" style="display: flex; flex-direction: column; gap: 5px;">
-                    <label for="start_date" style="font-size: 0.9rem; font-weight: bold;">From:</label>
+                    <label for="start_date" style="font-size: 0.9rem; font-weight: bold;">From</label>
                     <input type="date" id="start_date" name="start_date" value="{{ request.args.get('start_date', '') }}" style="padding: 8px; border-radius: 4px; border: 1px solid var(--border-color, #ddd);">
-                </div>
+               </div>
                 <div class="filter-group" style="display: flex; flex-direction: column; gap: 5px;">
-                    <label for="end_date" style="font-size: 0.9rem; font-weight: bold;">To:</label>
+                    <label for="end_date" style="font-size: 0.9rem; font-weight: bold;">To</label>
                     <input type="date" id="end_date" name="end_date" value="{{ request.args.get('end_date', '') }}" style="padding: 8px; border-radius: 4px; border: 1px solid var(--border-color, #ddd);">
-                </div>
+               </div>
                 <div class="filter-actions" style="display: flex; gap: 10px;">
                     <button type="submit" class="btn-filter" style="padding: 8px 16px; background: var(--primary-color, #007bff); color: white; border: none; border-radius: 4px; cursor: pointer;">Apply Filter</button>
                     <a href="{{ url_for('profile') }}" class="btn-clear" style="padding: 8px 16px; color: var(--text-muted, #666); text-decoration: none; font-size: 0.9rem; align-self: center;">Clear</a>
-                </div>
-            </form>
-        </div>
+               </div>
+           </form>
+       </div>
         <h2 class="section-title">Recent Transactions</h2>
         <table class="trans-table">
             <thead>
@@ -54,8 +102,9 @@
                     <th>Description</th>
                     <th>Category</th>
                     <th>Amount</th>
-                </tr>
-            </thead>
+                    <th>Edit</th>
+               </tr>
+           </thead>
             <tbody>
                 {% for t in transactions %}
                 <tr>
@@ -63,11 +112,12 @@
                     <td>{{ t.description }}</td>
                     <td><span class="badge badge-category">{{ t.category }}</span></td>
                     <td>₹{{ "%.2f"|format(t.amount) }}</td>
-                </tr>
+                    <td><a href="{{ url_for('edit_expense', id=t.id) }}" class="trans-edit-link">Edit</a></td>
+               </tr>
                 {% endfor %}
-            </tbody>
-        </table>
-    </div>
+           </tbody>
+       </table>
+   </div>
 
     <div class="section">
         <h2 class="section-title">Spending by Category</h2>
@@ -76,13 +126,13 @@
             <div class="category-header">
                 <span class="category-name">{{ cat.name }}</span>
                 <span class="category-amount">₹{{ "%.2f"|format(cat.total) }}</span>
-            </div>
+           </div>
             <div class="category-bar-bg">
                 <div class="category-bar-fill" style="width: {{ cat.percentage }}%"></div>
-            </div>
-        </div>
+           </div>
+       </div>
         {% endfor %}
-    </div>
+   </div>
 
 </section>
 {% endblock %}
