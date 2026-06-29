@@ -135,6 +135,27 @@
         font-size: 0.8rem;
         margin-top: 0.35rem;
     }
+    .danger-zone {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border, #e5e7eb);
+        text-align: center;
+    }
+    .btn-danger-outline {
+        background: transparent;
+        color: var(--danger, #dc2626);
+        border: 1px solid var(--danger, #dc2626);
+        padding: 0.5rem 1rem;
+        border-radius: var(--radius-sm, 6px);
+        cursor: pointer;
+        font: inherit;
+        font-family: var(--font-body);
+        font-size: 0.95rem;
+    }
+    .btn-danger-outline:hover {
+        background: var(--danger, #dc2626);
+        color: var(--paper, #ffffff);
+    }
 </style>
 {% endblock %}
 
@@ -183,6 +204,14 @@
                 <a href="{{ url_for('profile') }}" class="btn-cancel">Cancel</a>
            </div>
        </form>
+       <div class="danger-zone">
+           <form method="post"
+                 action="{{ url_for('delete_expense', id=expense_id) }}"
+                 onsubmit="return confirm('Delete this expense permanently? This cannot be undone.');">
+               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+               <button type="submit" class="btn-danger-outline">Delete this expense</button>
+           </form>
+       </div>
    </div>
     <a href="{{ url_for('profile') }}" class="back-link">← Back to profile</a>
 </div>
