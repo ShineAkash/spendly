@@ -1,15 +1,20 @@
 from flask import Flask, render_template, flash, redirect, url_for, request, abort
 from datetime import datetime, date as date_cls
 from flask_wtf import FlaskForm
+from flask_wtf.csrf import generate_csrf
 from wtforms import StringField, PasswordField, SubmitField, DecimalField, SelectField, DateField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, NumberRange, ValidationError
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from database.db import get_db, init_db, seed_db, add_expense as db_add_expense, update_expense as db_update_expense
+from database.db import get_db, init_db, seed_db, add_expense as db_add_expense, update_expense as db_update_expense, delete_expense as db_delete_expense
 import sqlite3
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "dev-secret-key-change-in-production"
+
+# Make `{{ csrf_token() }}` available as a Jinja global so standalone (non-FlaskForm) forms
+# can include a CSRF input. Existing FlaskForm-based forms keep using `form.hidden_tag()`.
+app.jinja_env.globals["csrf_token"] = generate_csrf
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -336,17 +341,37 @@ def edit_expense(id):
         except sqlite3.Error:
             app.logger.exception("edit_expense: database update failed")
             flash("Could not save the changes. Please try again.", "error")
-            return render_template("edit_expense.html", form=form)
+            return render_template("edit_expense.html", form=form, expense_id=expense["id"])
 
         flash("Expense updated successfully!", "success")
         return redirect(url_for("profile"))
 
-    return render_template("edit_expense.html", form=form)
+    return render_template("edit_expense.html", form=form, expense_id=expense["id"])
 
 
-@app.route("/expenses/<int:id>/delete")
+@app.route("/expenses/<int:id>/delete", methods=["POST"])
+@login_required
 def delete_expense(id):
-    return "Delete expense — coming in Step 9"
+    db = get_db()
+    row = db.execute(
+        "SELECT id FROM expenses WHERE id = ? AND user_id = ?",
+        (id, current_user.id)
+    ).fetchone()
+    db.close()
+
+    if row is None:
+        abort(404)
+
+    try:
+        db_delete_expense(id, current_user.id)
+    except sqlite3.Error:
+        app.logger.exception("Failed to delete expense id=%s user=%s", id, current_user.id)
+        flash("Could not delete the expense. Please try again.", "error")
+        return redirect(url_for("profile"))
+
+    app.logger.info("Deleted expense id=%s user=%s", id, current_user.id)
+    flash("Expense deleted.", "success")
+    return redirect(url_for("profile"))
 
 
 if __name__ == "__main__":
